@@ -4,14 +4,14 @@ use std::{fs::File, io::Read, path::Path};
 
 #[derive(Parser)]
 #[command(version)]
-/// File Search, search for a query in a file
+/// fsearch, search for a query in a file
 struct UserInput {
     /// Path of the file
     #[arg(short, long)]
-    path: String,
+    path: Vec<String>,
     /// Query to search
     #[arg(short, long)]
-    query: String,
+    query: Vec<String>,
     /// Ignore case
     #[arg(short, long, default_value_t = false)]
     ignore_case: bool,
@@ -19,18 +19,27 @@ struct UserInput {
 
 fn main() {
     let user_input = UserInput::parse();
-    let path = Path::new(&user_input.path);
-    let query = String::from(&user_input.query);
-
-    match File::open(path) {
-        Ok(mut file) => {
-            let mut file_content = String::new();
-            if let Err(e) = file.read_to_string(&mut file_content) {
-                eprintln!("Failed to read file: {e}");
+    if user_input.path.is_empty() {
+        eprintln!("No files provided");
+    } else if user_input.query.is_empty() {
+        eprintln!("No queries provided");
+    } else {
+        for path_string in &user_input.path {
+            for query in &user_input.query {
+                let path = Path::new(&path_string);
+                match File::open(path) {
+                    Ok(mut file) => {
+                        let mut file_content = String::new();
+                        if let Err(e) = file.read_to_string(&mut file_content) {
+                            eprintln!("Failed to read file: {e}");
+                        }
+                        println!("file: {} query: {}", path_string.blue(), query.blue());
+                        search_file(&file_content, query, user_input.ignore_case);
+                    }
+                    Err(e) => eprintln!("Failed to open {} : {e}", path_string),
+                }
             }
-            search_file(&file_content, &query, user_input.ignore_case);
         }
-        Err(e) => eprintln!("Failed to open file: {e}"),
     }
 }
 

@@ -26,16 +26,18 @@ fn main() {
                 Ok(mut file) => {
                     let mut file_content = String::new();
                     if let Err(e) = file.read_to_string(&mut file_content) {
-                        eprintln!("Failed to read file: {e}");
+                        eprintln!("{}", format!("Failed to read {}, {e}", path_string).red());
+                    } else {
+                        println!(
+                            "{} file: {} query: {}",
+                            "➔ ".to_string().green(),
+                            path_string.blue().underline(),
+                            query.blue().underline()
+                        );
+                        search_file(&file_content, query, user_input.ignore_case);
                     }
-                    println!(
-                        "file: {} query: {}",
-                        path_string.blue().underline(),
-                        query.blue().underline()
-                    );
-                    search_file(&file_content, query, user_input.ignore_case);
                 }
-                Err(e) => eprintln!("Failed to open {} : {e}", path_string),
+                Err(e) => eprintln!("{}", format!("Failed to open {}, {e}", path_string).red()),
             }
         }
     }

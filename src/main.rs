@@ -20,10 +20,10 @@ struct UserInput {
 fn main() {
     let user_input = UserInput::parse();
     for path_string in &user_input.file {
-        for query in &user_input.query {
-            let path = Path::new(&path_string);
-            match File::open(path) {
-                Ok(mut file) => {
+        let path = Path::new(&path_string);
+        match File::open(path) {
+            Ok(mut file) => {
+                for query in &user_input.query {
                     let mut file_content = String::new();
                     if let Err(e) = file.read_to_string(&mut file_content) {
                         eprintln!("{}", format!("Failed to read {}, {e}", path_string).red());
@@ -37,8 +37,8 @@ fn main() {
                         search_file(&file_content, query, user_input.ignore_case);
                     }
                 }
-                Err(e) => eprintln!("{}", format!("Failed to open {}, {e}", path_string).red()),
             }
+            Err(e) => eprintln!("{}", format!("Failed to open {}, {e}", path_string).red()),
         }
     }
 }

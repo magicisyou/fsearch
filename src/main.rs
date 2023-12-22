@@ -7,10 +7,10 @@ use std::{fs::File, io::Read, path::Path};
 /// fsearch, search for a query in a file
 struct UserInput {
     /// Path of the file
-    #[arg(short, long)]
-    path: Vec<String>,
+    #[arg(short, long, required = true)]
+    file: Vec<String>,
     /// Query to search
-    #[arg(short, long)]
+    #[arg(short, long, required = true)]
     query: Vec<String>,
     /// Ignore case
     #[arg(short, long, default_value_t = false)]
@@ -19,25 +19,23 @@ struct UserInput {
 
 fn main() {
     let user_input = UserInput::parse();
-    if user_input.path.is_empty() {
-        eprintln!("No files provided");
-    } else if user_input.query.is_empty() {
-        eprintln!("No queries provided");
-    } else {
-        for path_string in &user_input.path {
-            for query in &user_input.query {
-                let path = Path::new(&path_string);
-                match File::open(path) {
-                    Ok(mut file) => {
-                        let mut file_content = String::new();
-                        if let Err(e) = file.read_to_string(&mut file_content) {
-                            eprintln!("Failed to read file: {e}");
-                        }
-                        println!("file: {} query: {}", path_string.blue(), query.blue());
-                        search_file(&file_content, query, user_input.ignore_case);
+    for path_string in &user_input.file {
+        for query in &user_input.query {
+            let path = Path::new(&path_string);
+            match File::open(path) {
+                Ok(mut file) => {
+                    let mut file_content = String::new();
+                    if let Err(e) = file.read_to_string(&mut file_content) {
+                        eprintln!("Failed to read file: {e}");
                     }
-                    Err(e) => eprintln!("Failed to open {} : {e}", path_string),
+                    println!(
+                        "file: {} query: {}",
+                        path_string.blue().underline(),
+                        query.blue().underline()
+                    );
+                    search_file(&file_content, query, user_input.ignore_case);
                 }
+                Err(e) => eprintln!("Failed to open {} : {e}", path_string),
             }
         }
     }

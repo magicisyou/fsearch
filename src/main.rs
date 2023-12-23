@@ -23,11 +23,11 @@ fn main() {
         let path = Path::new(&path_string);
         match File::open(path) {
             Ok(mut file) => {
-                for query in &user_input.query {
-                    let mut file_content = String::new();
-                    if let Err(e) = file.read_to_string(&mut file_content) {
-                        eprintln!("{}", format!("Failed to read {}, {e}", path_string).red());
-                    } else {
+                let mut file_content = String::new();
+                if let Err(e) = file.read_to_string(&mut file_content) {
+                    eprintln!("{}", format!("Failed to read {}, {e}", path_string).red());
+                } else {
+                    for query in &user_input.query {
                         println!(
                             "{} file: {} query: {}",
                             "➔ ".to_string().green(),
@@ -54,30 +54,45 @@ fn search_file(file_content: &str, query: &str, ignore_case: bool) {
 fn case_insensitive_search(file_content: &str, query: &str) {
     let query = query.to_lowercase();
     for (line_number, line) in file_content.lines().enumerate() {
-        if let Some(index) = (line.to_lowercase()).find(&query) {
+        if let Some(indices) = find_matched_indices(&line.to_lowercase(), &query) {
             let query_len = query.len();
-            print_matched_line(line, line_number, index, query_len);
+            print_matched_line(line, line_number, indices, query_len);
         }
     }
 }
 
 fn case_sensitive_search(file_content: &str, query: &str) {
     for (line_number, line) in file_content.lines().enumerate() {
-        if let Some(index) = line.find(query) {
+        if let Some(indices) = find_matched_indices(line, query) {
             let query_len = query.len();
-            print_matched_line(line, line_number, index, query_len);
+            print_matched_line(line, line_number, indices, query_len);
         }
     }
 }
 
-fn print_matched_line(line: &str, line_number: usize, index: usize, query_len: usize) {
-    let (start_string, remaining_string) = line.split_at(index);
-    let (middle_string, end_string) = remaining_string.split_at(query_len);
-    println!(
-        "{}: {}{}{}",
-        (line_number + 1).to_string().blue(),
-        start_string,
-        middle_string.purple().bold(),
-        end_string,
-    );
+fn find_matched_indices(line: &str, query: &str) -> Option<Vec<usize>> {
+    let mut indices = vec![];
+    let mut start: usize = 0;
+    let query_length = query.len();
+    while let Some(index) = line[start..].find(query) {
+        indices.push(index);
+        start += index + query_length;
+    }
+    if indices.is_empty() {
+        None
+    } else {
+        Some(indices)
+    }
+}
+
+fn print_matched_line(line: &str, line_number: usize, indices: Vec<usize>, query_len: usize) {
+    print!("{}: ", (line_number + 1).to_string().blue(),);
+    let mut line = line;
+    for index in indices {
+        let (start_string, remaining_string) = line.split_at(index);
+        let (middle_string, end_string) = remaining_string.split_at(query_len);
+        print!("{}{}", start_string, middle_string.purple().bold(),);
+        line = end_string;
+    }
+    println!("{}", line);
 }
